@@ -1,0 +1,1866 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FinançasPro | Controle Pessoal & Familiar</title>
+    
+    <!-- Tailwind CSS via CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Chart.js para Gráficos Interativos -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Lucide Icons para Ícones Modernos -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <!-- Fonte Inter (Google Fonts) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Configuração do Tailwind -->
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#eef2ff',
+                            100: '#e0e7ff',
+                            500: '#6366f1',
+                            600: '#4f46e5',
+                            700: '#4338ca',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Estilos Customizados (Separados para fácil edição) -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+        /* Scrollbar sutil */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 9999px;
+        }
+        .dark ::-webkit-scrollbar-thumb {
+            background: #334155;
+        }
+        /* Animação suave entre abas */
+        .tab-content {
+            animation: fadeIn 0.25s ease-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 dark:bg-slate-950 dark:text-slate-100 transition-colors duration-200 min-h-screen flex flex-col">
+
+    <!-- ===================================================================== -->
+    <!-- BANNER DE DADOS DE EXEMPLO (Visível apenas se estiver usando mocks)   -->
+    <!-- ===================================================================== -->
+    <div id="demo-banner" class="hidden bg-indigo-600 text-white text-xs sm:text-sm py-2 px-4 flex flex-wrap items-center justify-center gap-3 shadow-sm">
+        <span class="flex items-center gap-1.5">
+            <i data-lucide="sparkles" class="w-4 h-4"></i>
+            Você está visualizando <strong>dados de exemplo</strong> para testar os gráficos e filtros.
+        </span>
+        <button onclick="App.clearDemoData()" class="bg-white text-indigo-700 hover:bg-indigo-50 font-semibold px-3 py-1 rounded-full text-xs transition shadow-sm">
+            Limpar dados de exemplo e começar do zero
+        </button>
+    </div>
+
+    <!-- ===================================================================== -->
+    <!-- HEADER PRINCIPAL (Logo, Alternador Pessoal/Familiar, Backup, Tema)    -->
+    <!-- ===================================================================== -->
+    <header class="sticky top-0 z-30 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between py-3 gap-3">
+                
+                <!-- Identidade Visual -->
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2.5">
+                        <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 to-emerald-500 flex items-center justify-center text-white shadow-md">
+                            <i data-lucide="wallet" class="w-5 h-5"></i>
+                        </div>
+                        <div>
+                            <h1 class="font-bold text-lg tracking-tight leading-none">Finanças<span class="text-indigo-600 dark:text-indigo-400">Pro</span></h1>
+                            <span class="text-[11px] text-slate-500 dark:text-slate-400 font-medium">Gestão Inteligente</span>
+                        </div>
+                    </div>
+
+                    <!-- Ações Rápidas Mobile -->
+                    <div class="flex items-center gap-2 md:hidden">
+                        <button onclick="App.toggleDarkMode()" class="p-2 rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800" title="Alternar Tema">
+                            <i data-lucide="moon" class="w-4 h-4 dark:hidden"></i>
+                            <i data-lucide="sun" class="w-4 h-4 hidden dark:block"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- SELETOR DE PERFIL: PESSOAL VS FAMILIAR -->
+                <div class="flex items-center justify-center bg-slate-100 dark:bg-slate-800 p-1 rounded-xl border border-slate-200/60 dark:border-slate-700/60">
+                    <button id="btn-scope-eu" onclick="App.setProfileScope('eu')" class="scope-btn flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition-all">
+                        <i data-lucide="user" class="w-3.5 h-3.5"></i>
+                        <span id="label-scope-eu">Meu Perfil</span>
+                    </button>
+                    <button id="btn-scope-familiar" onclick="App.setProfileScope('familiar')" class="scope-btn flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition-all">
+                        <i data-lucide="users" class="w-3.5 h-3.5"></i>
+                        <span>Visão Familiar</span>
+                    </button>
+                    <button id="btn-scope-esposa" onclick="App.setProfileScope('esposa')" class="scope-btn flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition-all">
+                        <i data-lucide="heart" class="w-3.5 h-3.5"></i>
+                        <span id="label-scope-esposa">Esposa</span>
+                    </button>
+                </div>
+
+                <!-- Ações de Backup (JSON) e Tema Desktop -->
+                <div class="hidden md:flex items-center gap-2">
+                    <button onclick="App.exportBackup()" class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-600 dark:text-slate-300 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 rounded-lg transition" title="Baixar arquivo JSON com todos os seus dados">
+                        <i data-lucide="download" class="w-3.5 h-3.5"></i>
+                        Exportar Backup
+                    </button>
+                    <label class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-600 dark:text-slate-300 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 rounded-lg transition cursor-pointer" title="Restaurar arquivo JSON">
+                        <i data-lucide="upload" class="w-3.5 h-3.5"></i>
+                        Restaurar
+                        <input type="file" accept=".json" onchange="App.importBackup(event)" class="hidden">
+                    </label>
+                    <button onclick="App.toggleDarkMode()" class="p-2 rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition" title="Alternar Tema Claro/Escuro">
+                        <i data-lucide="moon" class="w-4 h-4 dark:hidden"></i>
+                        <i data-lucide="sun" class="w-4 h-4 hidden dark:block"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- MENU DE NAVEGAÇÃO (ABAS) -->
+            <nav class="flex space-x-1 overflow-x-auto pb-0 -mb-px">
+                <button onclick="App.switchTab('dashboard')" data-tab="dashboard" class="nav-tab flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition whitespace-nowrap">
+                    <i data-lucide="layout-dashboard" class="w-4 h-4"></i>
+                    Dashboard & Análises
+                </button>
+                <button onclick="App.switchTab('transactions')" data-tab="transactions" class="nav-tab flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition whitespace-nowrap">
+                    <i data-lucide="list-ordered" class="w-4 h-4"></i>
+                    Lançamentos
+                </button>
+                <button onclick="App.switchTab('import')" data-tab="import" class="nav-tab flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition whitespace-nowrap">
+                    <i data-lucide="file-spreadsheet" class="w-4 h-4"></i>
+                    Importar Extrato
+                </button>
+                <button onclick="App.switchTab('rules')" data-tab="rules" class="nav-tab flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition whitespace-nowrap">
+                    <i data-lucide="wand-2" class="w-4 h-4"></i>
+                    Regras & Configurações
+                </button>
+            </nav>
+        </div>
+    </header>
+
+    <!-- ===================================================================== -->
+    <!-- CONTEÚDO PRINCIPAL                                                    -->
+    <!-- ===================================================================== -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+        <!-- ================================================================= -->
+        <!-- ABA 1: DASHBOARD & ANÁLISES                                       -->
+        <!-- ================================================================= -->
+        <section id="tab-dashboard" class="tab-content space-y-6">
+            
+            <!-- Barra de Filtro de Período e Ação Rápida -->
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+                <div class="flex flex-wrap items-center gap-3">
+                    <div class="flex items-center gap-2 text-sm font-medium text-slate-600 dark:text-slate-300">
+                        <i data-lucide="calendar" class="w-4 h-4 text-indigo-500"></i>
+                        <span>Período:</span>
+                    </div>
+                    <select id="filter-month" onchange="App.renderDashboard()" class="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-1.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <option value="all">Todos os Meses</option>
+                        <option value="01">Janeiro</option>
+                        <option value="02">Fevereiro</option>
+                        <option value="03">Março</option>
+                        <option value="04">Abril</option>
+                        <option value="05">Maio</option>
+                        <option value="06">Junho</option>
+                        <option value="07">Julho</option>
+                        <option value="08">Agosto</option>
+                        <option value="09">Setembro</option>
+                        <option value="10">Outubro</option>
+                        <option value="11">Novembro</option>
+                        <option value="12">Dezembro</option>
+                    </select>
+                    <select id="filter-year" onchange="App.renderDashboard()" class="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-1.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <!-- Preenchido via JS -->
+                    </select>
+                </div>
+
+                <button onclick="App.openTransactionModal()" class="flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl text-sm font-medium transition shadow-sm">
+                    <i data-lucide="plus" class="w-4 h-4"></i>
+                    Novo Lançamento
+                </button>
+            </div>
+
+            <!-- Cards de KPI (Indicadores Principais) -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <!-- Saldo -->
+                <div class="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Saldo do Período</span>
+                        <div class="w-8 h-8 rounded-lg bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center">
+                            <i data-lucide="scale" class="w-4 h-4"></i>
+                        </div>
+                    </div>
+                    <p id="kpi-balance" class="text-2xl font-bold mt-2 tracking-tight">R$ 0,00</p>
+                    <p id="kpi-balance-sub" class="text-xs text-slate-500 mt-1">Receitas menos despesas</p>
+                </div>
+
+                <!-- Receitas -->
+                <div class="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Receitas</span>
+                        <div class="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+                            <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
+                        </div>
+                    </div>
+                    <p id="kpi-income" class="text-2xl font-bold text-emerald-600 dark:text-emerald-400 mt-2 tracking-tight">R$ 0,00</p>
+                    <p id="kpi-income-count" class="text-xs text-slate-500 mt-1">0 entradas registradas</p>
+                </div>
+
+                <!-- Despesas -->
+                <div class="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Despesas</span>
+                        <div class="w-8 h-8 rounded-lg bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 flex items-center justify-center">
+                            <i data-lucide="arrow-down-right" class="w-4 h-4"></i>
+                        </div>
+                    </div>
+                    <p id="kpi-expense" class="text-2xl font-bold text-rose-600 dark:text-rose-400 mt-2 tracking-tight">R$ 0,00</p>
+                    <p id="kpi-expense-count" class="text-xs text-slate-500 mt-1">0 saídas registradas</p>
+                </div>
+
+                <!-- Taxa de Economia -->
+                <div class="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Taxa de Economia</span>
+                        <div class="w-8 h-8 rounded-lg bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center">
+                            <i data-lucide="piggy-bank" class="w-4 h-4"></i>
+                        </div>
+                    </div>
+                    <p id="kpi-savings-rate" class="text-2xl font-bold mt-2 tracking-tight">0%</p>
+                    <div class="w-full bg-slate-100 dark:bg-slate-800 h-1.5 rounded-full mt-2 overflow-hidden">
+                        <div id="kpi-savings-bar" class="bg-amber-500 h-full rounded-full transition-all duration-500" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Insights Inteligentes -->
+            <div class="bg-gradient-to-r from-indigo-50/80 via-white to-emerald-50/80 dark:from-indigo-950/30 dark:via-slate-900 dark:to-emerald-950/30 p-5 rounded-2xl border border-indigo-100 dark:border-indigo-900/50 shadow-sm">
+                <div class="flex items-center gap-2 mb-3">
+                    <div class="p-1.5 bg-indigo-600 text-white rounded-lg">
+                        <i data-lucide="sparkles" class="w-4 h-4"></i>
+                    </div>
+                    <h2 class="font-semibold text-sm sm:text-base">Análises & Insights Automáticos</h2>
+                </div>
+                <div id="insights-container" class="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
+                    <!-- Preenchido dinamicamente -->
+                </div>
+            </div>
+
+            <!-- Grid de Gráficos -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Gráfico de Rosca: Despesas por Categoria -->
+                <div class="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col">
+                    <h3 class="font-semibold text-base mb-1">Despesas por Categoria</h3>
+                    <p class="text-xs text-slate-500 mb-4">Distribuição percentual dos gastos no período</p>
+                    <div class="relative flex-1 min-h-[260px] flex items-center justify-center">
+                        <canvas id="chart-categories"></canvas>
+                    </div>
+                </div>
+
+                <!-- Gráfico de Barras: Evolução Mensal (Receitas vs Despesas) -->
+                <div class="lg:col-span-2 bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col">
+                    <h3 class="font-semibold text-base mb-1">Evolução Mensal (Receitas vs. Despesas)</h3>
+                    <p class="text-xs text-slate-500 mb-4">Comparativo de fluxo de caixa ao longo do ano selecionado</p>
+                    <div class="relative flex-1 min-h-[260px]">
+                        <canvas id="chart-monthly"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Gráfico Comparativo Casal (Aparece automaticamente na Visão Familiar) -->
+            <div id="couple-comparison-card" class="hidden bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-4">
+                    <div>
+                        <h3 class="font-semibold text-base flex items-center gap-2">
+                            <i data-lucide="users" class="w-4 h-4 text-indigo-500"></i>
+                            Comparativo Familiar: <span id="comp-names-title">Eu vs. Esposa</span>
+                        </h3>
+                        <p class="text-xs text-slate-500">Proporção de receitas e despesas por responsável</p>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+                    <div class="h-[220px]">
+                        <canvas id="chart-couple"></canvas>
+                    </div>
+                    <div id="couple-stats-summary" class="space-y-3">
+                        <!-- Resumo textual comparativo -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================================================================= -->
+        <!-- ABA 2: LANÇAMENTOS (EXTRATO COMPLETO)                             -->
+        <!-- ================================================================= -->
+        <section id="tab-transactions" class="tab-content hidden space-y-5">
+            
+            <!-- Filtros e Busca -->
+            <div class="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
+                    <div class="relative flex-1">
+                        <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
+                        <input type="text" id="tx-search" oninput="App.renderTransactionsTable()" placeholder="Buscar por descrição (ex: Uber, Mercado, Salário)..." class="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                    <div class="flex flex-wrap items-center gap-2">
+                        <select id="tx-filter-category" onchange="App.renderTransactionsTable()" class="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            <option value="all">Todas Categorias</option>
+                        </select>
+                        <select id="tx-filter-type" onchange="App.renderTransactionsTable()" class="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            <option value="all">Todos Tipos</option>
+                            <option value="expense">Apenas Despesas</option>
+                            <option value="income">Apenas Receitas</option>
+                        </select>
+                        <button onclick="App.openTransactionModal()" class="flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl text-sm font-medium transition">
+                            <i data-lucide="plus" class="w-4 h-4"></i>
+                            Adicionar
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tabela de Transações -->
+            <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="border-b border-slate-200 dark:border-slate-800 text-xs font-semibold uppercase tracking-wider text-slate-500 bg-slate-50/50 dark:bg-slate-800/50">
+                                <th class="py-3.5 px-4">Data</th>
+                                <th class="py-3.5 px-4">Descrição</th>
+                                <th class="py-3.5 px-4">Categoria</th>
+                                <th class="py-3.5 px-4">Responsável</th>
+                                <th class="py-3.5 px-4 text-right">Valor</th>
+                                <th class="py-3.5 px-4 text-center">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="transactions-tbody" class="divide-y divide-slate-100 dark:divide-slate-800 text-sm">
+                            <!-- Linhas geradas via JS -->
+                        </tbody>
+                    </table>
+                </div>
+                <div id="transactions-empty" class="hidden py-12 text-center text-slate-500">
+                    <i data-lucide="inbox" class="w-10 h-10 mx-auto mb-2 opacity-40"></i>
+                    <p class="font-medium">Nenhum lançamento encontrado para os filtros atuais.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================================================================= -->
+        <!-- ABA 3: IMPORTAR EXTRATO (CSV / TEXTO / AUTO-CATEGORIZAÇÃO)        -->
+        <!-- ================================================================= -->
+        <section id="tab-import" class="tab-content hidden space-y-6">
+            <div class="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-5">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 dark:border-slate-800 pb-4">
+                    <div>
+                        <h2 class="text-lg font-bold flex items-center gap-2">
+                            <i data-lucide="file-up" class="w-5 h-5 text-indigo-600"></i>
+                            Importação Inteligente de Extrato
+                        </h2>
+                        <p class="text-sm text-slate-500">Envie um arquivo CSV/TXT ou cole as linhas copiadas diretamente do seu banco/fatura.</p>
+                    </div>
+                    <div class="flex items-center gap-2 bg-slate-50 dark:bg-slate-800 px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700">
+                        <span class="text-xs font-medium text-slate-500">Este extrato é de:</span>
+                        <select id="import-owner" class="bg-transparent text-sm font-semibold text-indigo-600 dark:text-indigo-400 focus:outline-none">
+                            <option value="eu" id="opt-import-eu">Eu</option>
+                            <option value="esposa" id="opt-import-esposa">Esposa</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- Área de Upload de Arquivo -->
+                    <div class="flex flex-col justify-between">
+                        <label for="csv-file-input" class="border-2 border-dashed border-slate-300 dark:border-slate-700 hover:border-indigo-500 dark:hover:border-indigo-500 rounded-2xl p-8 text-center cursor-pointer transition flex flex-col items-center justify-center h-full bg-slate-50/50 dark:bg-slate-800/30">
+                            <div class="w-12 h-12 rounded-full bg-indigo-100 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 flex items-center justify-center mb-3">
+                                <i data-lucide="upload-cloud" class="w-6 h-6"></i>
+                            </div>
+                            <p class="font-semibold text-sm">Clique para selecionar um arquivo CSV ou TXT</p>
+                            <p class="text-xs text-slate-500 mt-1">Suporta extratos do Nubank, Itaú, Inter, Bradesco, BTG, etc.</p>
+                            <input type="file" id="csv-file-input" accept=".csv,.txt,.ofx" onchange="App.handleFileUpload(event)" class="hidden">
+                        </label>
+                    </div>
+
+                    <!-- Área de Colar Texto -->
+                    <div class="space-y-2">
+                        <div class="flex items-center justify-between">
+                            <label class="text-xs font-semibold uppercase tracking-wider text-slate-500">Ou cole o texto do extrato aqui:</label>
+                            <button onclick="App.fillSampleImport()" class="text-xs text-indigo-600 dark:text-indigo-400 hover:underline font-medium">
+                                Inserir exemplo para testar
+                            </button>
+                        </div>
+                        <textarea id="import-raw-text" rows="6" placeholder="Exemplo de formato aceito:&#10;15/11/2026;UBER *TRIP;-24,90&#10;16/11/2026;SUPERMERCADO CARREFOUR;-342,15&#10;17/11/2026;PIX RECEBIDO CLIENTE;1500,00" class="w-full p-3.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
+                        <button onclick="App.processRawImport()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2.5 rounded-xl text-sm transition flex items-center justify-center gap-2 shadow-sm">
+                            <i data-lucide="cpu" class="w-4 h-4"></i>
+                            Processar e Categorizar Automaticamente
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pré-visualização dos Lançamentos Processados -->
+            <div id="import-preview-card" class="hidden bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div>
+                        <h3 class="font-bold text-base flex items-center gap-2">
+                            <i data-lucide="check-circle-2" class="w-5 h-5 text-emerald-500"></i>
+                            Pré-visualização da Importação (<span id="import-count">0</span> itens)
+                        </h3>
+                        <p class="text-xs text-slate-500">Revise as categorias identificadas. Você pode ensinar novas regras diretamente aqui!</p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button onclick="App.cancelImport()" class="px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition">
+                            Cancelar
+                        </button>
+                        <button onclick="App.confirmImport()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2 rounded-xl text-sm font-semibold transition shadow-sm flex items-center gap-2">
+                            <i data-lucide="save" class="w-4 h-4"></i>
+                            Confirmar Importação
+                        </button>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto border border-slate-200 dark:border-slate-800 rounded-xl">
+                    <table class="w-full text-left border-collapse text-sm">
+                        <thead>
+                            <tr class="bg-slate-50 dark:bg-slate-800/70 border-b border-slate-200 dark:border-slate-800 text-xs font-semibold text-slate-500">
+                                <th class="py-3 px-3">Data</th>
+                                <th class="py-3 px-3">Descrição Original</th>
+                                <th class="py-3 px-3">Categoria Direcionada</th>
+                                <th class="py-3 px-3">Criar Regra Automática?</th>
+                                <th class="py-3 px-3 text-right">Valor</th>
+                                <th class="py-3 px-3 text-center">Remover</th>
+                            </tr>
+                        </thead>
+                        <tbody id="import-preview-tbody" class="divide-y divide-slate-100 dark:divide-slate-800">
+                            <!-- Linhas de preview -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================================================================= -->
+        <!-- ABA 4: REGRAS DE CATEGORIZAÇÃO & CONFIGURAÇÕES DO CASAL           -->
+        <!-- ================================================================= -->
+        <section id="tab-rules" class="tab-content hidden space-y-6">
+            
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                
+                <!-- Coluna Esquerda: Perfis do Casal + Categorias -->
+                <div class="space-y-6">
+                    <!-- Configuração dos Nomes (Pessoal vs Familiar) -->
+                    <div class="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
+                        <h3 class="font-bold text-base flex items-center gap-2">
+                            <i data-lucide="users" class="w-4 h-4 text-indigo-600"></i>
+                            Perfis Pessoal & Familiar
+                        </h3>
+                        <p class="text-xs text-slate-500">Personalize os nomes exibidos no alternador superior e nos lançamentos.</p>
+                        
+                        <div class="space-y-3">
+                            <div>
+                                <label class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Seu Nome (Perfil Principal)</label>
+                                <input type="text" id="cfg-name-eu" placeholder="Ex: João" class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Nome do Cônjuge / Esposa</label>
+                                <input type="text" id="cfg-name-esposa" placeholder="Ex: Maria" class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm">
+                            </div>
+                            <button onclick="App.saveProfileNames()" class="w-full bg-slate-900 dark:bg-indigo-600 hover:opacity-90 text-white py-2 rounded-xl text-sm font-medium transition">
+                                Salvar Nomes
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Gerenciar Categorias -->
+                    <div class="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
+                        <h3 class="font-bold text-base flex items-center gap-2">
+                            <i data-lucide="tags" class="w-4 h-4 text-emerald-600"></i>
+                            Categorias Disponíveis
+                        </h3>
+                        
+                        <form onsubmit="App.addCategory(event)" class="flex gap-2">
+                            <input type="text" id="new-cat-name" required placeholder="Nova categoria..." class="flex-1 px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm">
+                            <input type="color" id="new-cat-color" value="#6366f1" class="w-10 h-9 p-1 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl cursor-pointer">
+                            <button type="submit" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-2 rounded-xl text-sm font-medium">
+                                <i data-lucide="plus" class="w-4 h-4"></i>
+                            </button>
+                        </form>
+
+                        <div id="categories-list" class="flex flex-wrap gap-2 pt-2">
+                            <!-- Badges de categorias -->
+                        </div>
+                    </div>
+
+                    <!-- Backup Mobile / Extra -->
+                    <div class="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-3">
+                        <h3 class="font-bold text-base flex items-center gap-2">
+                            <i data-lucide="database" class="w-4 h-4 text-amber-500"></i>
+                            Backup & Dados (GitHub Pages)
+                        </h3>
+                        <p class="text-xs text-slate-500">Seus dados ficam salvos no navegador. Exporte um JSON periodicamente para segurança.</p>
+                        <div class="flex gap-2">
+                            <button onclick="App.exportBackup()" class="flex-1 flex items-center justify-center gap-1.5 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 rounded-xl text-xs font-semibold">
+                                <i data-lucide="download" class="w-3.5 h-3.5"></i> Exportar JSON
+                            </button>
+                            <label class="flex-1 flex items-center justify-center gap-1.5 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 rounded-xl text-xs font-semibold cursor-pointer">
+                                <i data-lucide="upload" class="w-3.5 h-3.5"></i> Importar JSON
+                                <input type="file" accept=".json" onchange="App.importBackup(event)" class="hidden">
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Coluna Direita (2 cols): Motor de Regras Automáticas -->
+                <div class="lg:col-span-2 bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-5">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800 pb-4">
+                        <div>
+                            <h2 class="text-lg font-bold flex items-center gap-2">
+                                <i data-lucide="wand-2" class="w-5 h-5 text-indigo-600"></i>
+                                Regras de Direcionamento Automático
+                            </h2>
+                            <p class="text-xs text-slate-500 mt-0.5">Sempre que um extrato contiver a palavra-chave abaixo, ele será categorizado automaticamente.</p>
+                        </div>
+                        <button onclick="App.reapplyAllRules()" class="flex items-center gap-1.5 px-3.5 py-2 bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 rounded-xl text-xs font-semibold transition">
+                            <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
+                            Reaplicar Regras nos Lançamentos
+                        </button>
+                    </div>
+
+                    <!-- Formulário para Nova Regra -->
+                    <form onsubmit="App.addRule(event)" class="grid grid-cols-1 sm:grid-cols-12 gap-3 bg-slate-50 dark:bg-slate-800/60 p-4 rounded-xl border border-slate-200/70 dark:border-slate-700/70">
+                        <div class="sm:col-span-5">
+                            <label class="block text-[11px] font-semibold uppercase text-slate-500 mb-1">Se a descrição contiver:</label>
+                            <input type="text" id="rule-keyword" required placeholder="Ex: IFOOD, UBER, NETFLIX, POSTO..." class="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm">
+                        </div>
+                        <div class="sm:col-span-4">
+                            <label class="block text-[11px] font-semibold uppercase text-slate-500 mb-1">Direcionar para Categoria:</label>
+                            <select id="rule-category" required class="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm">
+                                <!-- Categorias via JS -->
+                            </select>
+                        </div>
+                        <div class="sm:col-span-3 flex items-end">
+                            <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded-lg text-sm transition flex items-center justify-center gap-1.5">
+                                <i data-lucide="plus" class="w-4 h-4"></i>
+                                Cadastrar Regra
+                            </button>
+                        </div>
+                    </form>
+
+                    <!-- Lista de Regras Cadastradas -->
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse text-sm">
+                            <thead>
+                                <tr class="border-b border-slate-200 dark:border-slate-800 text-xs font-semibold uppercase text-slate-500">
+                                    <th class="py-3 px-3">Palavra-Chave (Gatilho)</th>
+                                    <th class="py-3 px-3">Categoria Destino</th>
+                                    <th class="py-3 px-3 text-right">Ação</th>
+                                </tr>
+                            </thead>
+                            <tbody id="rules-tbody" class="divide-y divide-slate-100 dark:divide-slate-800">
+                                <!-- Regras via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- ===================================================================== -->
+    <!-- MODAL: ADICIONAR / EDITAR LANÇAMENTO MANUAL                           -->
+    <!-- ===================================================================== -->
+    <div id="transaction-modal" class="fixed inset-0 z-50 hidden bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-900 w-full max-w-md rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xl p-6 space-y-5">
+            <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+                <h3 id="modal-title" class="font-bold text-lg">Novo Lançamento</h3>
+                <button onclick="App.closeTransactionModal()" class="text-slate-400 hover:text-slate-600 p-1">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <form onsubmit="App.saveTransaction(event)" class="space-y-4">
+                <input type="hidden" id="tx-id">
+
+                <!-- Tipo: Despesa ou Receita -->
+                <div class="grid grid-cols-2 gap-2 p-1 bg-slate-100 dark:bg-slate-800 rounded-xl">
+                    <label class="cursor-pointer">
+                        <input type="radio" name="tx-type" value="expense" checked class="peer hidden">
+                        <div class="text-center py-2 rounded-lg text-sm font-semibold text-slate-600 dark:text-slate-400 peer-checked:bg-rose-600 peer-checked:text-white transition">
+                            Despesa (-)
+                        </div>
+                    </label>
+                    <label class="cursor-pointer">
+                        <input type="radio" name="tx-type" value="income" class="peer hidden">
+                        <div class="text-center py-2 rounded-lg text-sm font-semibold text-slate-600 dark:text-slate-400 peer-checked:bg-emerald-600 peer-checked:text-white transition">
+                            Receita (+)
+                        </div>
+                    </label>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Descrição</label>
+                    <input type="text" id="tx-desc" required placeholder="Ex: Supermercado, Salário, Conta de Luz..." oninput="App.autoSuggestCategoryInModal(this.value)" class="w-full px-3.5 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm">
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Valor (R$)</label>
+                        <input type="number" id="tx-amount" step="0.01" min="0.01" required placeholder="0,00" class="w-full px-3.5 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Data</label>
+                        <input type="date" id="tx-date" required class="w-full px-3.5 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Categoria</label>
+                        <select id="tx-category" required class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm">
+                            <!-- Categorias via JS -->
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Responsável</label>
+                        <select id="tx-owner" required class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm">
+                            <option value="eu" id="modal-opt-eu">Eu</option>
+                            <option value="esposa" id="modal-opt-esposa">Esposa</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="flex justify-end gap-2 pt-3 border-t border-slate-100 dark:border-slate-800">
+                    <button type="button" onclick="App.closeTransactionModal()" class="px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2 rounded-xl text-sm font-semibold shadow-sm">
+                        Salvar Lançamento
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ===================================================================== -->
+    <!-- TOAST DE NOTIFICAÇÃO (Substitui alert() de forma elegante)            -->
+    <!-- ===================================================================== -->
+    <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+    <!-- ===================================================================== -->
+    <!-- JAVASCRIPT MODULAR (Configurações, Dados Padrão, Motor e UI)          -->
+    <!-- ===================================================================== -->
+    <script>
+        /**
+         * ====================================================================
+         * MÓDULO 1: CONFIGURAÇÕES PADRÃO E DADOS INICIAIS
+         * (Edite aqui facilmente no GitHub se quiser mudar padrões globais)
+         * ====================================================================
+         */
+        const DEFAULT_CONFIG = {
+            storageKey: 'financas_pro_v1_data',
+            names: {
+                eu: 'Eu',
+                esposa: 'Esposa'
+            },
+            categories: [
+                { id: 'cat_alimentacao', name: 'Alimentação & Mercado', color: '#10b981' },
+                { id: 'cat_moradia', name: 'Moradia & Contas', color: '#6366f1' },
+                { id: 'cat_transporte', name: 'Transporte & Combustível', color: '#f59e0b' },
+                { id: 'cat_lazer', name: 'Lazer & Viagens', color: '#ec4899' },
+                { id: 'cat_saude', name: 'Saúde & Farmácia', color: '#ef4444' },
+                { id: 'cat_assinaturas', name: 'Assinaturas & Apps', color: '#8b5cf6' },
+                { id: 'cat_salario', name: 'Salário & Renda Extra', color: '#059669' },
+                { id: 'cat_investimentos', name: 'Investimentos', color: '#0ea5e9' },
+                { id: 'cat_outros', name: 'Outros', color: '#64748b' }
+            ],
+            // Regras padrão de categorização automática (Keyword -> Category ID)
+            rules: [
+                { id: 'r1', keyword: 'IFOOD', categoryId: 'cat_alimentacao' },
+                { id: 'r2', keyword: 'SUPERMERCADO', categoryId: 'cat_alimentacao' },
+                { id: 'r3', keyword: 'CARREFOUR', categoryId: 'cat_alimentacao' },
+                { id: 'r4', keyword: 'ASSAI', categoryId: 'cat_alimentacao' },
+                { id: 'r5', keyword: 'UBER', categoryId: 'cat_transporte' },
+                { id: 'r6', keyword: '99APP', categoryId: 'cat_transporte' },
+                { id: 'r7', keyword: 'POSTO', categoryId: 'cat_transporte' },
+                { id: 'r8', keyword: 'SHELL', categoryId: 'cat_transporte' },
+                { id: 'r9', keyword: 'NETFLIX', categoryId: 'cat_assinaturas' },
+                { id: 'r10', keyword: 'SPOTIFY', categoryId: 'cat_assinaturas' },
+                { id: 'r11', keyword: 'AMAZON', categoryId: 'cat_assinaturas' },
+                { id: 'r12', keyword: 'DROGASIL', categoryId: 'cat_saude' },
+                { id: 'r13', keyword: 'FARMACIA', categoryId: 'cat_saude' },
+                { id: 'r14', keyword: 'ALUGUEL', categoryId: 'cat_moradia' },
+                { id: 'r15', keyword: 'ENERGIA', categoryId: 'cat_moradia' },
+                { id: 'r16', keyword: 'INTERNET', categoryId: 'cat_moradia' },
+                { id: 'r17', keyword: 'SALARIO', categoryId: 'cat_salario' },
+                { id: 'r18', keyword: 'PAGAMENTO', categoryId: 'cat_salario' }
+            ]
+        };
+
+        // Gera transações de demonstração para o mês atual
+        function generateDemoTransactions() {
+            const now = new Date();
+            const yyyy = now.getFullYear();
+            const mm = String(now.getMonth() + 1).padStart(2, '0');
+            const prevMm = String(now.getMonth() === 0 ? 12 : now.getMonth()).padStart(2, '0');
+            const prevYyyy = now.getMonth() === 0 ? yyyy - 1 : yyyy;
+
+            return [
+                { id: 'demo_1', date: `${yyyy}-${mm}-05`, description: 'SALARIO MENSAL EMPRESA', amount: 6500.00, type: 'income', categoryId: 'cat_salario', owner: 'eu' },
+                { id: 'demo_2', date: `${yyyy}-${mm}-05`, description: 'SALARIO ESPOSA', amount: 4800.00, type: 'income', categoryId: 'cat_salario', owner: 'esposa' },
+                { id: 'demo_3', date: `${yyyy}-${mm}-07`, description: 'ALUGUEL E CONDOMINIO', amount: 2400.00, type: 'expense', categoryId: 'cat_moradia', owner: 'eu' },
+                { id: 'demo_4', date: `${yyyy}-${mm}-09`, description: 'SUPERMERCADO CARREFOUR', amount: 850.40, type: 'expense', categoryId: 'cat_alimentacao', owner: 'esposa' },
+                { id: 'demo_5', date: `${yyyy}-${mm}-11`, description: 'POSTO SHELL IPIRANGA', amount: 240.00, type: 'expense', categoryId: 'cat_transporte', owner: 'eu' },
+                { id: 'demo_6', date: `${yyyy}-${mm}-12`, description: 'IFOOD *RESTAURANTE', amount: 118.90, type: 'expense', categoryId: 'cat_alimentacao', owner: 'eu' },
+                { id: 'demo_7', date: `${yyyy}-${mm}-14`, description: 'NETFLIX + SPOTIFY', amount: 79.80, type: 'expense', categoryId: 'cat_assinaturas', owner: 'esposa' },
+                { id: 'demo_8', date: `${yyyy}-${mm}-15`, description: 'DROGASIL FARMACIA', amount: 145.50, type: 'expense', categoryId: 'cat_saude', owner: 'esposa' },
+                { id: 'demo_9', date: `${yyyy}-${mm}-16`, description: 'APORTE TESOURO DIRETO', amount: 1200.00, type: 'expense', categoryId: 'cat_investimentos', owner: 'eu' },
+                { id: 'demo_10', date: `${prevYyyy}-${prevMm}-10`, description: 'SUPERMERCADO ASSAI', amount: 790.00, type: 'expense', categoryId: 'cat_alimentacao', owner: 'eu' },
+                { id: 'demo_11', date: `${prevYyyy}-${prevMm}-05`, description: 'SALARIO MENSAL', amount: 6500.00, type: 'income', categoryId: 'cat_salario', owner: 'eu' }
+            ];
+        }
+
+        /**
+         * ====================================================================
+         * MÓDULO 2: MOTOR PRINCIPAL DA APLICAÇÃO (Estado, Persistência e UI)
+         * ====================================================================
+         */
+        const App = {
+            state: {
+                isDemo: true,
+                profileScope: 'familiar', // 'eu' | 'familiar' | 'esposa'
+                activeTab: 'dashboard',
+                names: { ...DEFAULT_CONFIG.names },
+                categories: [...DEFAULT_CONFIG.categories],
+                rules: [...DEFAULT_CONFIG.rules],
+                transactions: [],
+                pendingImport: []
+            },
+
+            charts: {
+                categories: null,
+                monthly: null,
+                couple: null
+            },
+
+            // Inicialização
+            init() {
+                this.loadTheme();
+                this.loadData();
+                this.populateYearFilter();
+                this.setDefaultMonthFilter();
+                this.syncProfileUI();
+                this.renderAll();
+                lucide.createIcons();
+            },
+
+            // ================================================================
+            // PERSISTÊNCIA (LOCALSTORAGE & BACKUP JSON)
+            // ================================================================
+            loadData() {
+                const saved = localStorage.getItem(DEFAULT_CONFIG.storageKey);
+                if (saved) {
+                    try {
+                        const parsed = JSON.parse(saved);
+                        this.state.isDemo = parsed.isDemo ?? false;
+                        this.state.names = parsed.names || { ...DEFAULT_CONFIG.names };
+                        this.state.categories = parsed.categories || [...DEFAULT_CONFIG.categories];
+                        this.state.rules = parsed.rules || [...DEFAULT_CONFIG.rules];
+                        this.state.transactions = parsed.transactions || [];
+                    } catch (e) {
+                        console.error('Erro ao ler dados salvos:', e);
+                        this.initDemoState();
+                    }
+                } else {
+                    this.initDemoState();
+                }
+
+                // Exibe ou oculta banner de demonstração
+                const banner = document.getElementById('demo-banner');
+                if (this.state.isDemo) banner.classList.remove('hidden');
+                else banner.classList.add('hidden');
+            },
+
+            initDemoState() {
+                this.state.isDemo = true;
+                this.state.transactions = generateDemoTransactions();
+                this.saveData();
+            },
+
+            saveData() {
+                const payload = {
+                    isDemo: this.state.isDemo,
+                    names: this.state.names,
+                    categories: this.state.categories,
+                    rules: this.state.rules,
+                    transactions: this.state.transactions
+                };
+                localStorage.setItem(DEFAULT_CONFIG.storageKey, JSON.stringify(payload));
+            },
+
+            clearDemoData() {
+                this.state.isDemo = false;
+                this.state.transactions = [];
+                this.saveData();
+                document.getElementById('demo-banner').classList.add('hidden');
+                this.renderAll();
+                this.showToast('Dados de exemplo removidos! Pronto para seus lançamentos.', 'success');
+            },
+
+            exportBackup() {
+                const dataStr = JSON.stringify({
+                    exportedAt: new Date().toISOString(),
+                    app: 'FinancasPro',
+                    data: {
+                        names: this.state.names,
+                        categories: this.state.categories,
+                        rules: this.state.rules,
+                        transactions: this.state.transactions
+                    }
+                }, null, 2);
+
+                const blob = new Blob([dataStr], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `backup-financas-${new Date().toISOString().slice(0, 10)}.json`;
+                a.click();
+                URL.revokeObjectURL(url);
+                this.showToast('Backup JSON baixado com sucesso!', 'success');
+            },
+
+            importBackup(event) {
+                const file = event.target.files[0];
+                if (!file) return;
+
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const json = JSON.parse(e.target.result);
+                        const imported = json.data || json;
+                        if (!imported.transactions || !imported.categories) {
+                            throw new Error('Formato inválido');
+                        }
+                        this.state.isDemo = false;
+                        this.state.names = imported.names || this.state.names;
+                        this.state.categories = imported.categories;
+                        this.state.rules = imported.rules || [];
+                        this.state.transactions = imported.transactions;
+                        this.saveData();
+                        document.getElementById('demo-banner').classList.add('hidden');
+                        this.syncProfileUI();
+                        this.renderAll();
+                        this.showToast('Backup restaurado com sucesso!', 'success');
+                    } catch (err) {
+                        this.showToast('Arquivo JSON inválido ou corrompido.', 'error');
+                    }
+                };
+                reader.readAsText(file);
+                event.target.value = '';
+            },
+
+            // ================================================================
+            // NAVEGAÇÃO, TEMA E ALTERNÂNCIA DE PERFIL (PESSOAL VS FAMILIAR)
+            // ================================================================
+            toggleDarkMode() {
+                const html = document.documentElement;
+                html.classList.toggle('dark');
+                localStorage.setItem('financas_theme', html.classList.contains('dark') ? 'dark' : 'light');
+                this.renderDashboard(); // Atualiza cores dos gráficos
+            },
+
+            loadTheme() {
+                const savedTheme = localStorage.getItem('financas_theme');
+                if (savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                    document.documentElement.classList.add('dark');
+                }
+            },
+
+            switchTab(tabId) {
+                this.state.activeTab = tabId;
+                document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+                document.getElementById(`tab-${tabId}`).classList.remove('hidden');
+
+                document.querySelectorAll('.nav-tab').forEach(btn => {
+                    const isSelected = btn.dataset.tab === tabId;
+                    btn.className = isSelected
+                        ? 'nav-tab flex items-center gap-2 px-4 py-2.5 text-sm font-semibold border-b-2 border-indigo-600 text-indigo-600 dark:text-indigo-400 transition whitespace-nowrap'
+                        : 'nav-tab flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition whitespace-nowrap';
+                });
+
+                if (tabId === 'dashboard') this.renderDashboard();
+                if (tabId === 'transactions') this.renderTransactionsTable();
+                if (tabId === 'rules') this.renderRulesAndCategories();
+                lucide.createIcons();
+            },
+
+            setProfileScope(scope) {
+                this.state.profileScope = scope;
+                this.syncProfileUI();
+                this.renderDashboard();
+                this.renderTransactionsTable();
+            },
+
+            syncProfileUI() {
+                // Atualiza labels dos botões com nomes personalizados
+                document.getElementById('label-scope-eu').textContent = this.state.names.eu;
+                document.getElementById('label-scope-esposa').textContent = this.state.names.esposa;
+                document.getElementById('opt-import-eu').textContent = this.state.names.eu;
+                document.getElementById('opt-import-esposa').textContent = this.state.names.esposa;
+                document.getElementById('modal-opt-eu').textContent = this.state.names.eu;
+                document.getElementById('modal-opt-esposa').textContent = this.state.names.esposa;
+                document.getElementById('cfg-name-eu').value = this.state.names.eu;
+                document.getElementById('cfg-name-esposa').value = this.state.names.esposa;
+                document.getElementById('comp-names-title').textContent = `${this.state.names.eu} vs. ${this.state.names.esposa}`;
+
+                // Estilo ativo no seletor Pessoal vs Familiar
+                ['eu', 'familiar', 'esposa'].forEach(key => {
+                    const btn = document.getElementById(`btn-scope-${key}`);
+                    if (this.state.profileScope === key) {
+                        btn.className = 'scope-btn flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-sm transition-all';
+                    } else {
+                        btn.className = 'scope-btn flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all';
+                    }
+                });
+            },
+
+            saveProfileNames() {
+                const eu = document.getElementById('cfg-name-eu').value.trim() || 'Eu';
+                const esposa = document.getElementById('cfg-name-esposa').value.trim() || 'Esposa';
+                this.state.names = { eu, esposa };
+                this.saveData();
+                this.syncProfileUI();
+                this.renderAll();
+                this.showToast('Nomes dos perfis atualizados!', 'success');
+            },
+
+            // ================================================================
+            // MOTOR DE REGRAS AUTOMÁTICAS DE CATEGORIZAÇÃO
+            // ================================================================
+            categorizeByDescription(description) {
+                const upperDesc = description.toUpperCase();
+                for (const rule of this.state.rules) {
+                    if (rule.keyword && upperDesc.includes(rule.keyword.toUpperCase())) {
+                        // Verifica se a categoria ainda existe
+                        const exists = this.state.categories.some(c => c.id === rule.categoryId);
+                        if (exists) return rule.categoryId;
+                    }
+                }
+                return 'cat_outros';
+            },
+
+            addRule(event) {
+                event.preventDefault();
+                const keywordInput = document.getElementById('rule-keyword');
+                const categorySelect = document.getElementById('rule-category');
+                const keyword = keywordInput.value.trim().toUpperCase();
+                const categoryId = categorySelect.value;
+
+                if (!keyword) return;
+
+                // Evita duplicidade exata de keyword (atualiza se existir)
+                const existingIdx = this.state.rules.findIndex(r => r.keyword.toUpperCase() === keyword);
+                if (existingIdx >= 0) {
+                    this.state.rules[existingIdx].categoryId = categoryId;
+                    this.showToast(`Regra "${keyword}" atualizada!`, 'info');
+                } else {
+                    this.state.rules.unshift({
+                        id: 'rule_' + Date.now(),
+                        keyword,
+                        categoryId
+                    });
+                    this.showToast(`Regra "${keyword}" cadastrada!`, 'success');
+                }
+
+                keywordInput.value = '';
+                this.saveData();
+                this.renderRulesAndCategories();
+            },
+
+            deleteRule(id) {
+                this.state.rules = this.state.rules.filter(r => r.id !== id);
+                this.saveData();
+                this.renderRulesAndCategories();
+                this.showToast('Regra removida.', 'info');
+            },
+
+            reapplyAllRules() {
+                let updatedCount = 0;
+                this.state.transactions.forEach(tx => {
+                    const matchedCat = this.categorizeByDescription(tx.description);
+                    if (matchedCat !== 'cat_outros' && tx.categoryId !== matchedCat) {
+                        tx.categoryId = matchedCat;
+                        updatedCount++;
+                    }
+                });
+                this.saveData();
+                this.renderAll();
+                this.showToast(`${updatedCount} lançamentos foram recategorizados pelas regras!`, 'success');
+            },
+
+            // ================================================================
+            // GERENCIAMENTO DE CATEGORIAS
+            // ================================================================
+            addCategory(event) {
+                event.preventDefault();
+                const nameInput = document.getElementById('new-cat-name');
+                const colorInput = document.getElementById('new-cat-color');
+                const name = nameInput.value.trim();
+                if (!name) return;
+
+                this.state.categories.push({
+                    id: 'cat_' + Date.now(),
+                    name,
+                    color: colorInput.value
+                });
+
+                nameInput.value = '';
+                this.saveData();
+                this.renderAll();
+                this.showToast(`Categoria "${name}" criada!`, 'success');
+            },
+
+            deleteCategory(id) {
+                if (id === 'cat_outros') {
+                    this.showToast('A categoria "Outros" é padrão e não pode ser excluída.', 'error');
+                    return;
+                }
+                // Move transações órfãs para 'cat_outros'
+                this.state.transactions.forEach(tx => {
+                    if (tx.categoryId === id) tx.categoryId = 'cat_outros';
+                });
+                this.state.categories = this.state.categories.filter(c => c.id !== id);
+                this.saveData();
+                this.renderAll();
+                this.showToast('Categoria excluída.', 'info');
+            },
+
+            getCategoryObj(id) {
+                return this.state.categories.find(c => c.id === id) || { id: 'cat_outros', name: 'Outros', color: '#64748b' };
+            },
+
+            // ================================================================
+            // IMPORTADOR DE EXTRATO (CSV / TXT / COLAR)
+            // ================================================================
+            handleFileUpload(event) {
+                const file = event.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    document.getElementById('import-raw-text').value = e.target.result;
+                    this.processRawImport();
+                };
+                reader.readAsText(file, 'UTF-8');
+                event.target.value = '';
+            },
+
+            fillSampleImport() {
+                const today = new Date();
+                const d1 = `10/${String(today.getMonth() + 1).padStart(2, '0')}/${today.getFullYear()}`;
+                const d2 = `12/${String(today.getMonth() + 1).padStart(2, '0')}/${today.getFullYear()}`;
+                const d3 = `14/${String(today.getMonth() + 1).padStart(2, '0')}/${today.getFullYear()}`;
+                const d4 = `15/${String(today.getMonth() + 1).padStart(2, '0')}/${today.getFullYear()}`;
+
+                document.getElementById('import-raw-text').value =
+`${d1};UBER *TRIP HELP.UBER.COM;-32,90
+${d2};IFOOD *BURGER KING;-68,50
+${d3};PIX RECEBIDO FREELANCE;1250,00
+${d4};COMPRA CARTAO LIVRARIA CULTURA;-89,90`;
+            },
+
+            processRawImport() {
+                const raw = document.getElementById('import-raw-text').value.trim();
+                if (!raw) {
+                    this.showToast('Cole o texto do extrato ou selecione um arquivo primeiro.', 'error');
+                    return;
+                }
+
+                const lines = raw.split(/\r?\n/).filter(l => l.trim().length > 0);
+                const parsedItems = [];
+
+                lines.forEach((line, idx) => {
+                    // Ignora cabeçalhos comuns de CSV
+                    if (idx === 0 && /data|date|descri|valor|amount/i.test(line)) return;
+
+                    // Detecta separador (; ou tab ou vírgula fora de números)
+                    const sep = line.includes(';') ? ';' : (line.includes('\t') ? '\t' : ',');
+                    const parts = line.split(sep).map(p => p.trim().replace(/^"|"$/g, ''));
+
+                    if (parts.length >= 3) {
+                        const dateISO = this.parseBrazilianDate(parts[0]);
+                        const description = parts[1];
+                        const rawVal = this.parseBrazilianNumber(parts[parts.length - 1]);
+
+                        if (dateISO && description && !isNaN(rawVal) && rawVal !== 0) {
+                            const type = rawVal < 0 ? 'expense' : 'income';
+                            const amount = Math.abs(rawVal);
+                            const autoCat = this.categorizeByDescription(description);
+
+                            parsedItems.push({
+                                tempId: 'imp_' + idx + '_' + Date.now(),
+                                date: dateISO,
+                                description,
+                                amount,
+                                type,
+                                categoryId: autoCat,
+                                createRule: false,
+                                ruleKeyword: this.extractSuggestedKeyword(description)
+                            });
+                        }
+                    }
+                });
+
+                if (parsedItems.length === 0) {
+                    this.showToast('Não foi possível identificar lançamentos válidos. Verifique o formato (Data;Descrição;Valor).', 'error');
+                    return;
+                }
+
+                this.state.pendingImport = parsedItems;
+                this.renderImportPreview();
+                this.showToast(`${parsedItems.length} lançamentos processados! Revise abaixo.`, 'success');
+            },
+
+            extractSuggestedKeyword(desc) {
+                // Pega a primeira palavra significativa com mais de 3 letras
+                const words = desc.toUpperCase().replace(/[^A-Z0-9\s]/g, ' ').split(/\s+/);
+                const stopWords = ['PIX', 'COMPRA', 'CARTAO', 'DEBITO', 'CREDITO', 'PAGAMENTO', 'TED', 'DOC'];
+                const found = words.find(w => w.length >= 4 && !stopWords.includes(w));
+                return found || words[0] || desc.slice(0, 12).toUpperCase();
+            },
+
+            parseBrazilianDate(str) {
+                // Aceita DD/MM/AAAA ou AAAA-MM-DD
+                if (/^\d{4}-\d{2}-\d{2}$/.test(str)) return str;
+                const match = str.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})$/);
+                if (match) {
+                    const dd = match[1].padStart(2, '0');
+                    const mm = match[2].padStart(2, '0');
+                    const yyyy = match[3].length === 2 ? '20' + match[3] : match[3];
+                    return `${yyyy}-${mm}-${dd}`;
+                }
+                return null;
+            },
+
+            parseBrazilianNumber(str) {
+                // Remove R$, espaços, pontos de milhar e troca vírgula decimal por ponto
+                let clean = str.replace(/[R$\s]/g, '');
+                if (clean.includes(',') && clean.includes('.')) {
+                    clean = clean.replace(/\./g, '').replace(',', '.');
+                } else if (clean.includes(',')) {
+                    clean = clean.replace(',', '.');
+                }
+                return parseFloat(clean);
+            },
+
+            renderImportPreview() {
+                const card = document.getElementById('import-preview-card');
+                const tbody = document.getElementById('import-preview-tbody');
+                document.getElementById('import-count').textContent = this.state.pendingImport.length;
+
+                if (this.state.pendingImport.length === 0) {
+                    card.classList.add('hidden');
+                    return;
+                }
+
+                card.classList.remove('hidden');
+                tbody.innerHTML = this.state.pendingImport.map((item, idx) => {
+                    const catOptions = this.state.categories.map(c =>
+                        `<option value="${c.id}" ${c.id === item.categoryId ? 'selected' : ''}>${c.name}</option>`
+                    ).join('');
+
+                    return `
+                        <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/40">
+                            <td class="py-2.5 px-3 whitespace-nowrap text-xs font-mono">${this.formatDateBR(item.date)}</td>
+                            <td class="py-2.5 px-3 font-medium">${this.escapeHTML(item.description)}</td>
+                            <td class="py-2.5 px-3">
+                                <select onchange="App.updatePendingCategory(${idx}, this.value)" class="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-2 py-1 text-xs font-medium">
+                                    ${catOptions}
+                                </select>
+                            </td>
+                            <td class="py-2.5 px-3">
+                                <label class="inline-flex items-center gap-1.5 text-xs cursor-pointer">
+                                    <input type="checkbox" ${item.createRule ? 'checked' : ''} onchange="App.togglePendingRule(${idx}, this.checked)" class="rounded text-indigo-600">
+                                    <span class="text-slate-600 dark:text-slate-400">Salvar regra:</span>
+                                    <input type="text" value="${this.escapeHTML(item.ruleKeyword)}" onchange="App.updatePendingKeyword(${idx}, this.value)" class="w-24 px-1.5 py-0.5 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded text-[11px] font-mono uppercase">
+                                </label>
+                            </td>
+                            <td class="py-2.5 px-3 text-right font-semibold whitespace-nowrap ${item.type === 'income' ? 'text-emerald-600' : 'text-rose-600'}">
+                                ${item.type === 'income' ? '+' : '-'} ${this.formatCurrency(item.amount)}
+                            </td>
+                            <td class="py-2.5 px-3 text-center">
+                                <button onclick="App.removePendingItem(${idx})" class="text-slate-400 hover:text-rose-500 p-1">
+                                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+                lucide.createIcons();
+            },
+
+            updatePendingCategory(idx, catId) {
+                this.state.pendingImport[idx].categoryId = catId;
+            },
+            togglePendingRule(idx, checked) {
+                this.state.pendingImport[idx].createRule = checked;
+            },
+            updatePendingKeyword(idx, val) {
+                this.state.pendingImport[idx].ruleKeyword = val.trim().toUpperCase();
+            },
+            removePendingItem(idx) {
+                this.state.pendingImport.splice(idx, 1);
+                this.renderImportPreview();
+            },
+            cancelImport() {
+                this.state.pendingImport = [];
+                document.getElementById('import-preview-card').classList.add('hidden');
+                document.getElementById('import-raw-text').value = '';
+            },
+
+            confirmImport() {
+                const owner = document.getElementById('import-owner').value;
+                let newRulesCount = 0;
+
+                if (this.state.isDemo) {
+                    this.state.isDemo = false;
+                    this.state.transactions = [];
+                    document.getElementById('demo-banner').classList.add('hidden');
+                }
+
+                this.state.pendingImport.forEach(item => {
+                    // Salva regra se o usuário marcou a caixinha
+                    if (item.createRule && item.ruleKeyword) {
+                        const exists = this.state.rules.some(r => r.keyword.toUpperCase() === item.ruleKeyword);
+                        if (!exists) {
+                            this.state.rules.unshift({
+                                id: 'rule_' + Date.now() + Math.random(),
+                                keyword: item.ruleKeyword,
+                                categoryId: item.categoryId
+                            });
+                            newRulesCount++;
+                        }
+                    }
+
+                    // Adiciona transação
+                    this.state.transactions.push({
+                        id: 'tx_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5),
+                        date: item.date,
+                        description: item.description,
+                        amount: item.amount,
+                        type: item.type,
+                        categoryId: item.categoryId,
+                        owner
+                    });
+                });
+
+                const totalImported = this.state.pendingImport.length;
+                this.saveData();
+                this.cancelImport();
+                this.populateYearFilter();
+                this.renderAll();
+
+                let msg = `${totalImported} lançamentos importados com sucesso!`;
+                if (newRulesCount > 0) msg += ` (${newRulesCount} novas regras aprendidas)`;
+                this.showToast(msg, 'success');
+                this.switchTab('dashboard');
+            },
+
+            // ================================================================
+            // CRUD MANUAL DE TRANSAÇÕES (MODAL E TABELA)
+            // ================================================================
+            openTransactionModal(txId = null) {
+                const modal = document.getElementById('transaction-modal');
+                const catSelect = document.getElementById('tx-category');
+                catSelect.innerHTML = this.state.categories.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+
+                if (txId) {
+                    const tx = this.state.transactions.find(t => t.id === txId);
+                    if (!tx) return;
+                    document.getElementById('modal-title').textContent = 'Editar Lançamento';
+                    document.getElementById('tx-id').value = tx.id;
+                    document.querySelector(`input[name="tx-type"][value="${tx.type}"]`).checked = true;
+                    document.getElementById('tx-desc').value = tx.description;
+                    document.getElementById('tx-amount').value = tx.amount;
+                    document.getElementById('tx-date').value = tx.date;
+                    document.getElementById('tx-category').value = tx.categoryId;
+                    document.getElementById('tx-owner').value = tx.owner;
+                } else {
+                    document.getElementById('modal-title').textContent = 'Novo Lançamento';
+                    document.getElementById('tx-id').value = '';
+                    document.querySelector('input[name="tx-type"][value="expense"]').checked = true;
+                    document.getElementById('tx-desc').value = '';
+                    document.getElementById('tx-amount').value = '';
+                    document.getElementById('tx-date').value = new Date().toISOString().slice(0, 10);
+                    document.getElementById('tx-category').value = this.state.categories[0]?.id || 'cat_outros';
+                    document.getElementById('tx-owner').value = this.state.profileScope === 'esposa' ? 'esposa' : 'eu';
+                }
+
+                modal.classList.remove('hidden');
+            },
+
+            closeTransactionModal() {
+                document.getElementById('transaction-modal').classList.add('hidden');
+            },
+
+            autoSuggestCategoryInModal(desc) {
+                if (document.getElementById('tx-id').value) return; // Não sobrescreve na edição
+                const suggested = this.categorizeByDescription(desc);
+                if (suggested !== 'cat_outros') {
+                    document.getElementById('tx-category').value = suggested;
+                }
+            },
+
+            saveTransaction(event) {
+                event.preventDefault();
+                const id = document.getElementById('tx-id').value;
+                const type = document.querySelector('input[name="tx-type"]:checked').value;
+                const description = document.getElementById('tx-desc').value.trim();
+                const amount = parseFloat(document.getElementById('tx-amount').value);
+                const date = document.getElementById('tx-date').value;
+                const categoryId = document.getElementById('tx-category').value;
+                const owner = document.getElementById('tx-owner').value;
+
+                if (this.state.isDemo) {
+                    this.state.isDemo = false;
+                    this.state.transactions = [];
+                    document.getElementById('demo-banner').classList.add('hidden');
+                }
+
+                if (id) {
+                    const idx = this.state.transactions.findIndex(t => t.id === id);
+                    if (idx >= 0) {
+                        this.state.transactions[idx] = { id, type, description, amount, date, categoryId, owner };
+                    }
+                    this.showToast('Lançamento atualizado!', 'success');
+                } else {
+                    this.state.transactions.push({
+                        id: 'tx_' + Date.now(),
+                        type, description, amount, date, categoryId, owner
+                    });
+                    this.showToast('Lançamento adicionado!', 'success');
+                }
+
+                this.saveData();
+                this.closeTransactionModal();
+                this.populateYearFilter();
+                this.renderAll();
+            },
+
+            deleteTransaction(id) {
+                this.state.transactions = this.state.transactions.filter(t => t.id !== id);
+                this.saveData();
+                this.renderAll();
+                this.showToast('Lançamento excluído.', 'info');
+            },
+
+            // ================================================================
+            // FILTROS E RENDERIZAÇÃO DO DASHBOARD E GRÁFICOS
+            // ================================================================
+            populateYearFilter() {
+                const select = document.getElementById('filter-year');
+                const currentVal = select.value;
+                const years = new Set([new Date().getFullYear().toString()]);
+                this.state.transactions.forEach(t => {
+                    if (t.date) years.add(t.date.slice(0, 4));
+                });
+
+                const sortedYears = Array.from(years).sort((a, b) => b - a);
+                select.innerHTML = sortedYears.map(y => `<option value="${y}">${y}</option>`).join('');
+                if (currentVal && sortedYears.includes(currentVal)) select.value = currentVal;
+            },
+
+            setDefaultMonthFilter() {
+                const mm = String(new Date().getMonth() + 1).padStart(2, '0');
+                document.getElementById('filter-month').value = mm;
+            },
+
+            getFilteredTransactions(ignoreMonth = false) {
+                const scope = this.state.profileScope;
+                const month = document.getElementById('filter-month').value;
+                const year = document.getElementById('filter-year').value;
+
+                return this.state.transactions.filter(tx => {
+                    // Filtro Pessoal vs Familiar
+                    if (scope === 'eu' && tx.owner !== 'eu') return false;
+                    if (scope === 'esposa' && tx.owner !== 'esposa') return false;
+
+                    // Filtro Ano
+                    if (year && !tx.date.startsWith(year)) return false;
+
+                    // Filtro Mês
+                    if (!ignoreMonth && month !== 'all') {
+                        const txMonth = tx.date.slice(5, 7);
+                        if (txMonth !== month) return false;
+                    }
+
+                    return true;
+                });
+            },
+
+            renderAll() {
+                this.renderDashboard();
+                this.renderTransactionsTable();
+                this.renderRulesAndCategories();
+            },
+
+            renderDashboard() {
+                const txs = this.getFilteredTransactions(false);
+                const yearTxs = this.getFilteredTransactions(true);
+
+                // Cálculo de KPIs
+                let income = 0, expense = 0, incCount = 0, expCount = 0;
+                txs.forEach(t => {
+                    if (t.type === 'income') { income += t.amount; incCount++; }
+                    else { expense += t.amount; expCount++; }
+                });
+
+                const balance = income - expense;
+                const savingsRate = income > 0 ? Math.max(0, ((income - expense) / income) * 100) : 0;
+
+                document.getElementById('kpi-balance').textContent = this.formatCurrency(balance);
+                document.getElementById('kpi-balance').className = `text-2xl font-bold mt-2 tracking-tight ${balance >= 0 ? 'text-slate-900 dark:text-white' : 'text-rose-600'}`;
+                document.getElementById('kpi-income').textContent = this.formatCurrency(income);
+                document.getElementById('kpi-income-count').textContent = `${incCount} entrada(s) no período`;
+                document.getElementById('kpi-expense').textContent = this.formatCurrency(expense);
+                document.getElementById('kpi-expense-count').textContent = `${expCount} saída(s) no período`;
+                document.getElementById('kpi-savings-rate').textContent = `${savingsRate.toFixed(1)}%`;
+                document.getElementById('kpi-savings-bar').style.width = `${Math.min(100, savingsRate)}%`;
+
+                this.renderInsights(txs, income, expense);
+                this.renderCategoryChart(txs);
+                this.renderMonthlyChart(yearTxs);
+                this.renderCoupleComparison(txs);
+            },
+
+            renderInsights(txs, income, expense) {
+                const container = document.getElementById('insights-container');
+                const expenses = txs.filter(t => t.type === 'expense');
+
+                if (expenses.length === 0 && income === 0) {
+                    container.innerHTML = `<div class="col-span-3 text-slate-500 text-xs">Adicione ou importe lançamentos neste período para gerar análises automáticas.</div>`;
+                    return;
+                }
+
+                // 1. Categoria campeã de gastos
+                const byCat = {};
+                expenses.forEach(e => { byCat[e.categoryId] = (byCat[e.categoryId] || 0) + e.amount; });
+                const topCatId = Object.keys(byCat).sort((a, b) => byCat[b] - byCat[a])[0];
+                const topCatObj = topCatId ? this.getCategoryObj(topCatId) : null;
+                const topCatPct = (topCatObj && expense > 0) ? ((byCat[topCatId] / expense) * 100).toFixed(0) : 0;
+
+                // 2. Maior gasto único
+                const biggestExpense = expenses.sort((a, b) => b.amount - a.amount)[0];
+
+                // 3. Comprometimento da renda
+                const commitPct = income > 0 ? ((expense / income) * 100).toFixed(0) : 100;
+
+                container.innerHTML = `
+                    <div class="bg-white/80 dark:bg-slate-800/70 p-3.5 rounded-xl border border-slate-200/60 dark:border-slate-700/60">
+                        <span class="text-[11px] font-semibold uppercase text-indigo-600 dark:text-indigo-400">Maior Foco de Gastos</span>
+                        <p class="font-semibold mt-0.5">${topCatObj ? `${topCatObj.name} (${topCatPct}%)` : 'Sem despesas'}</p>
+                        <p class="text-xs text-slate-500 mt-0.5">${topCatObj ? `Total de ${this.formatCurrency(byCat[topCatId])}` : '-'}</p>
+                    </div>
+                    <div class="bg-white/80 dark:bg-slate-800/70 p-3.5 rounded-xl border border-slate-200/60 dark:border-slate-700/60">
+                        <span class="text-[11px] font-semibold uppercase text-rose-600 dark:text-rose-400">Maior Despesa Única</span>
+                        <p class="font-semibold mt-0.5 truncate">${biggestExpense ? this.escapeHTML(biggestExpense.description) : 'Nenhuma'}</p>
+                        <p class="text-xs text-slate-500 mt-0.5">${biggestExpense ? this.formatCurrency(biggestExpense.amount) : '-'}</p>
+                    </div>
+                    <div class="bg-white/80 dark:bg-slate-800/70 p-3.5 rounded-xl border border-slate-200/60 dark:border-slate-700/60">
+                        <span class="text-[11px] font-semibold uppercase text-emerald-600 dark:text-emerald-400">Comprometimento da Renda</span>
+                        <p class="font-semibold mt-0.5">${income > 0 ? `${commitPct}% da receita utilizada` : 'Sem receitas no período'}</p>
+                        <p class="text-xs text-slate-500 mt-0.5">${commitPct <= 70 ? 'Excelente controle financeiro!' : commitPct <= 95 ? 'Atenção à margem de segurança.' : 'Gastos superaram as receitas.'}</p>
+                    </div>
+                `;
+            },
+
+            renderCategoryChart(txs) {
+                const ctx = document.getElementById('chart-categories').getContext('2d');
+                if (this.charts.categories) this.charts.categories.destroy();
+
+                const byCat = {};
+                txs.filter(t => t.type === 'expense').forEach(t => {
+                    byCat[t.categoryId] = (byCat[t.categoryId] || 0) + t.amount;
+                });
+
+                const labels = [];
+                const data = [];
+                const colors = [];
+
+                Object.keys(byCat).sort((a, b) => byCat[b] - byCat[a]).forEach(catId => {
+                    const cat = this.getCategoryObj(catId);
+                    labels.push(cat.name);
+                    data.push(byCat[catId]);
+                    colors.push(cat.color);
+                });
+
+                const isDark = document.documentElement.classList.contains('dark');
+
+                this.charts.categories = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: labels.length ? labels : ['Sem despesas'],
+                        datasets: [{
+                            data: data.length ? data : [1],
+                            backgroundColor: colors.length ? colors : ['#e2e8f0'],
+                            borderWidth: 0,
+                            hoverOffset: 6
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        cutout: '68%',
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: {
+                                    color: isDark ? '#cbd5e1' : '#475569',
+                                    boxWidth: 12,
+                                    padding: 14,
+                                    font: { size: 11, family: 'Inter' }
+                                }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: (ctx) => data.length ? ` ${ctx.label}: ${this.formatCurrency(ctx.raw)}` : ' Sem dados'
+                                }
+                            }
+                        }
+                    }
+                });
+            },
+
+            renderMonthlyChart(yearTxs) {
+                const ctx = document.getElementById('chart-monthly').getContext('2d');
+                if (this.charts.monthly) this.charts.monthly.destroy();
+
+                const months = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+                const incData = new Array(12).fill(0);
+                const expData = new Array(12).fill(0);
+
+                yearTxs.forEach(t => {
+                    const mIdx = parseInt(t.date.slice(5, 7), 10) - 1;
+                    if (mIdx >= 0 && mIdx < 12) {
+                        if (t.type === 'income') incData[mIdx] += t.amount;
+                        else expData[mIdx] += t.amount;
+                    }
+                });
+
+                const isDark = document.documentElement.classList.contains('dark');
+                const gridColor = isDark ? 'rgba(148, 163, 184, 0.1)' : 'rgba(148, 163, 184, 0.15)';
+                const textColor = isDark ? '#94a3b8' : '#64748b';
+
+                this.charts.monthly = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: months,
+                        datasets: [
+                            {
+                                label: 'Receitas',
+                                data: incData,
+                                backgroundColor: '#10b981',
+                                borderRadius: 6,
+                                barPercentage: 0.6
+                            },
+                            {
+                                label: 'Despesas',
+                                data: expData,
+                                backgroundColor: '#f43f5e',
+                                borderRadius: 6,
+                                barPercentage: 0.6
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            x: { grid: { display: false }, ticks: { color: textColor, font: { size: 11 } } },
+                            y: { grid: { color: gridColor }, ticks: { color: textColor, font: { size: 11 } } }
+                        },
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                                align: 'end',
+                                labels: { color: textColor, boxWidth: 12, font: { size: 11 } }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: (ctx) => ` ${ctx.dataset.label}: ${this.formatCurrency(ctx.raw)}`
+                                }
+                            }
+                        }
+                    }
+                });
+            },
+
+            renderCoupleComparison(txs) {
+                const card = document.getElementById('couple-comparison-card');
+                if (this.state.profileScope !== 'familiar') {
+                    card.classList.add('hidden');
+                    return;
+                }
+
+                card.classList.remove('hidden');
+                const ctx = document.getElementById('chart-couple').getContext('2d');
+                if (this.charts.couple) this.charts.couple.destroy();
+
+                let euInc = 0, euExp = 0, espInc = 0, espExp = 0;
+                txs.forEach(t => {
+                    if (t.owner === 'eu') {
+                        if (t.type === 'income') euInc += t.amount; else euExp += t.amount;
+                    } else {
+                        if (t.type === 'income') espInc += t.amount; else espExp += t.amount;
+                    }
+                });
+
+                const isDark = document.documentElement.classList.contains('dark');
+                const textColor = isDark ? '#94a3b8' : '#64748b';
+
+                this.charts.couple = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: [this.state.names.eu, this.state.names.esposa],
+                        datasets: [
+                            { label: 'Receitas', data: [euInc, espInc], backgroundColor: '#6366f1', borderRadius: 6 },
+                            { label: 'Despesas', data: [euExp, espExp], backgroundColor: '#ec4899', borderRadius: 6 }
+                        ]
+                    },
+                    options: {
+                        indexAxis: 'y',
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            x: { ticks: { color: textColor, font: { size: 11 } } },
+                            y: { ticks: { color: textColor, font: { size: 12, weight: 'bold' } } }
+                        },
+                        plugins: {
+                            legend: { labels: { color: textColor, boxWidth: 12 } }
+                        }
+                    }
+                });
+
+                const totalExp = euExp + espExp;
+                const euPct = totalExp > 0 ? ((euExp / totalExp) * 100).toFixed(0) : 0;
+                const espPct = totalExp > 0 ? ((espExp / totalExp) * 100).toFixed(0) : 0;
+
+                document.getElementById('couple-stats-summary').innerHTML = `
+                    <div class="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-700/60 flex justify-between items-center">
+                        <div>
+                            <p class="font-semibold text-sm">${this.escapeHTML(this.state.names.eu)}</p>
+                            <p class="text-xs text-slate-500">Responsável por ${euPct}% das despesas familiares</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-xs text-emerald-600 font-medium">+${this.formatCurrency(euInc)}</p>
+                            <p class="text-sm text-rose-600 font-bold">-${this.formatCurrency(euExp)}</p>
+                        </div>
+                    </div>
+                    <div class="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-700/60 flex justify-between items-center">
+                        <div>
+                            <p class="font-semibold text-sm">${this.escapeHTML(this.state.names.esposa)}</p>
+                            <p class="text-xs text-slate-500">Responsável por ${espPct}% das despesas familiares</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-xs text-emerald-600 font-medium">+${this.formatCurrency(espInc)}</p>
+                            <p class="text-sm text-rose-600 font-bold">-${this.formatCurrency(espExp)}</p>
+                        </div>
+                    </div>
+                `;
+            },
+
+            // ================================================================
+            // RENDERIZAÇÃO DA TABELA DE LANÇAMENTOS E REGRAS
+            // ================================================================
+            renderTransactionsTable() {
+                const tbody = document.getElementById('transactions-tbody');
+                const empty = document.getElementById('transactions-empty');
+                const search = document.getElementById('tx-search').value.toLowerCase();
+                const catFilter = document.getElementById('tx-filter-category').value;
+                const typeFilter = document.getElementById('tx-filter-type').value;
+
+                // Atualiza opções de filtro de categoria
+                const catSelect = document.getElementById('tx-filter-category');
+                const prevCat = catSelect.value;
+                catSelect.innerHTML = `<option value="all">Todas Categorias</option>` +
+                    this.state.categories.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+                catSelect.value = prevCat || 'all';
+
+                let list = this.getFilteredTransactions(false).filter(tx => {
+                    if (search && !tx.description.toLowerCase().includes(search)) return false;
+                    if (catFilter !== 'all' && tx.categoryId !== catFilter) return false;
+                    if (typeFilter !== 'all' && tx.type !== typeFilter) return false;
+                    return true;
+                });
+
+                // Ordena da data mais recente para a mais antiga
+                list.sort((a, b) => b.date.localeCompare(a.date));
+
+                if (list.length === 0) {
+                    tbody.innerHTML = '';
+                    empty.classList.remove('hidden');
+                    return;
+                }
+
+                empty.classList.add('hidden');
+                tbody.innerHTML = list.map(tx => {
+                    const cat = this.getCategoryObj(tx.categoryId);
+                    const ownerLabel = tx.owner === 'eu' ? this.state.names.eu : this.state.names.esposa;
+                    const ownerBadge = tx.owner === 'eu'
+                        ? 'bg-indigo-50 text-indigo-700 dark:bg-indigo-950/70 dark:text-indigo-300'
+                        : 'bg-pink-50 text-pink-700 dark:bg-pink-950/70 dark:text-pink-300';
+
+                    return `
+                        <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition">
+                            <td class="py-3 px-4 whitespace-nowrap text-xs font-mono text-slate-500">${this.formatDateBR(tx.date)}</td>
+                            <td class="py-3 px-4 font-medium">${this.escapeHTML(tx.description)}</td>
+                            <td class="py-3 px-4">
+                                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium" style="background-color: ${cat.color}18; color: ${cat.color}">
+                                    <span class="w-1.5 h-1.5 rounded-full" style="background-color: ${cat.color}"></span>
+                                    ${this.escapeHTML(cat.name)}
+                                </span>
+                            </td>
+                            <td class="py-3 px-4">
+                                <span class="px-2.5 py-0.5 rounded-md text-xs font-medium ${ownerBadge}">
+                                    ${this.escapeHTML(ownerLabel)}
+                                </span>
+                            </td>
+                            <td class="py-3 px-4 text-right font-semibold whitespace-nowrap ${tx.type === 'income' ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}">
+                                ${tx.type === 'income' ? '+' : '-'} ${this.formatCurrency(tx.amount)}
+                            </td>
+                            <td class="py-3 px-4 text-center whitespace-nowrap">
+                                <button onclick="App.openTransactionModal('${tx.id}')" class="text-slate-400 hover:text-indigo-600 p-1" title="Editar">
+                                    <i data-lucide="pencil" class="w-4 h-4"></i>
+                                </button>
+                                <button onclick="App.deleteTransaction('${tx.id}')" class="text-slate-400 hover:text-rose-600 p-1" title="Excluir">
+                                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+                lucide.createIcons();
+            },
+
+            renderRulesAndCategories() {
+                // Select de categorias no formulário de regra
+                const ruleCatSelect = document.getElementById('rule-category');
+                ruleCatSelect.innerHTML = this.state.categories.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+
+                // Lista de categorias
+                const catList = document.getElementById('categories-list');
+                catList.innerHTML = this.state.categories.map(c => `
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800">
+                        <span class="w-2.5 h-2.5 rounded-full" style="background-color: ${c.color}"></span>
+                        ${this.escapeHTML(c.name)}
+                        ${c.id !== 'cat_outros' ? `<button onclick="App.deleteCategory('${c.id}')" class="ml-1 text-slate-400 hover:text-rose-500">&times;</button>` : ''}
+                    </span>
+                `).join('');
+
+                // Tabela de regras
+                const rulesTbody = document.getElementById('rules-tbody');
+                rulesTbody.innerHTML = this.state.rules.map(rule => {
+                    const cat = this.getCategoryObj(rule.categoryId);
+                    return `
+                        <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/40">
+                            <td class="py-2.5 px-3 font-mono text-xs font-semibold text-indigo-600 dark:text-indigo-400">
+                                "${this.escapeHTML(rule.keyword)}"
+                            </td>
+                            <td class="py-2.5 px-3">
+                                <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium" style="background-color: ${cat.color}18; color: ${cat.color}">
+                                    <span class="w-1.5 h-1.5 rounded-full" style="background-color: ${cat.color}"></span>
+                                    ${this.escapeHTML(cat.name)}
+                                </span>
+                            </td>
+                            <td class="py-2.5 px-3 text-right">
+                                <button onclick="App.deleteRule('${rule.id}')" class="text-slate-400 hover:text-rose-600 p-1" title="Remover Regra">
+                                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+                lucide.createIcons();
+            },
+
+            // ================================================================
+            // UTILITÁRIOS (Formatação Moeda, Data, Toast, Segurança XSS)
+            // ================================================================
+            formatCurrency(val) {
+                return Number(val || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+            },
+
+            formatDateBR(isoDate) {
+                if (!isoDate) return '';
+                const [y, m, d] = isoDate.split('-');
+                return `${d}/${m}/${y}`;
+            },
+
+            escapeHTML(str) {
+                return String(str)
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;');
+            },
+
+            showToast(message, type = 'info') {
+                const container = document.getElementById('toast-container');
+                const toast = document.createElement('div');
+                const colors = {
+                    success: 'bg-emerald-600 text-white',
+                    error: 'bg-rose-600 text-white',
+                    info: 'bg-slate-900 dark:bg-indigo-600 text-white'
+                };
+                toast.className = `${colors[type] || colors.info} px-4 py-3 rounded-xl shadow-lg text-sm font-medium flex items-center gap-2 transition-all duration-300 transform translate-y-2 opacity-0`;
+                toast.textContent = message;
+                container.appendChild(toast);
+
+                requestAnimationFrame(() => {
+                    toast.classList.remove('translate-y-2', 'opacity-0');
+                });
+
+                setTimeout(() => {
+                    toast.classList.add('opacity-0', 'translate-y-2');
+                    setTimeout(() => toast.remove(), 300);
+                }, 3200);
+            }
+        };
+
+        // Inicializa a aplicação assim que o DOM estiver pronto
+        window.addEventListener('DOMContentLoaded', () => App.init());
+    </script>
+</body>
+</html>
